@@ -964,6 +964,7 @@ def load_config(http_url, file_config, allow_imports=True, bazel_version=None):
         file_config = file_config or ".bazelci/presubmit.yml"
         with open(file_config, "r") as fd:
             config = yaml.safe_load(fd)
+            print(config)
 
     # Legacy mode means that there is exactly one task per platform (e.g. ubuntu1604_nojdk),
     # which means that we can get away with using the platform name as task ID.
@@ -972,8 +973,8 @@ def load_config(http_url, file_config, allow_imports=True, bazel_version=None):
     if "platforms" in config:
         config["tasks"] = config.pop("platforms")
 
-    if "tasks" not in config:
-        config["tasks"] = {}
+    # if "tasks" not in config:
+    #     config["tasks"] = {}
 
     maybe_overwrite_bazel_version(bazel_version, config)
     expand_task_config(config)
@@ -4572,12 +4573,13 @@ def main(argv=None):
             # Maybe overwrite the bazel version for each task, we have to do it before the config expansion.
             bazel_version = args.overwrite_bazel_version
             configs = fetch_configs(args.http_config, args.file_config, bazel_version)
+            print(configs)
             tasks = configs.get("tasks", {})
             task_config = tasks.get(args.task)
             if not task_config:
                 raise BuildkiteException(
                     "No such task '{}' in configuration. Available: {}".format(
-                        args.task, ", ".join(tasks)
+                        args.task, configs
                     )
                 )
 

@@ -1,0 +1,37 @@
+# Example GitHub Actions workflow for using the BCR Presubmit action
+# 
+# To use this:
+# 1. Copy this file to your repository at: .github/workflows/presubmit.yml
+# 2. Adjust the action reference path (see comments below)
+# 3. Ensure your repository has a .bcr/presubmit.yml or .bazelci/presubmit.yml file
+
+name: Presubmit Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
+
+jobs:
+  presubmit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run presubmit tests
+        # Option 1: Reference from this repository (if public)
+        uses: bazelbuild/continuous-integration/actions/bcr-presubmit@master
+        # Option 2: Reference from your own repository (if you copied the action)
+        # uses: ./.github/actions/bcr-presubmit
+        with:
+          # Optional: specify custom presubmit file path
+          # presubmit_file: .bcr/presubmit.yml
+          
+          # Optional: run a specific task
+          # task: ubuntu2004
+          
+          # Optional: override Bazel version
+          # bazel_version: 7.0.0
+

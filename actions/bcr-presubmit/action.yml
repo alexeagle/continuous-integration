@@ -1,0 +1,58 @@
+name: 'BCR Presubmit'
+description: 'Runs presubmit tests from .bcr/presubmit.yml or .bazelci/presubmit.yml in the repository'
+inputs:
+  presubmit_file:
+    description: 'Path to presubmit.yml file (defaults to .bcr/presubmit.yml, then .bazelci/presubmit.yml)'
+    required: false
+    default: ''
+  
+  task:
+    description: 'Specific task to run (optional, runs all tasks if not specified)'
+    required: false
+  
+  bazel_version:
+    description: 'Bazel version to use (overrides presubmit.yml)'
+    required: false
+  
+  working_directory:
+    description: 'Working directory (defaults to repository root)'
+    required: false
+    default: '.'
+
+runs:
+  using: 'composite'
+  steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install pyyaml requests
+        shell: bash
+      - uses: actions/checkout@v5
+        # Fetch a single file so we can run it
+        # https://github.com/actions/checkout#fetch-only-a-single-file
+      - uses: actions/checkout@v5
+        with:
+          repository: alexeagle/continuous-integration
+          ref: master
+          path: ci-repo
+          sparse-checkout: buildkite/bazelci.py
+          sparse-checkout-cone-mode: false
+      - name: Copy bazelci script
+        run: |
+          mkdir -p ${{ github.action_path }}/.bcr-scripts
+          cp ci-repo/buildkite/bazelci.py ${{ github.action_path }}/.bcr-scripts/
+        shell: bash
+      - name: Run presubmit tests
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          PRESUBMIT_FILE: ${{ inputs.presubmit_file }}
+          TASK: ${{ inputs.task }}
+          BAZEL_VERSION: ${{ inputs.bazel_version }}
+          ACTION_PATH: ${{ github.action_path }}
+          WORKING_DIR: ${{ inputs.working_directory }}
+        run: |
+          ${{ github.action_path }}/entrypoint.sh
+        shell: bash
+
